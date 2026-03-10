@@ -4,7 +4,7 @@ import hashlib
 import os
 from zoneinfo import ZoneInfo  # Python 3.9+
 
-IMAGE_URL = "<some_URL>"  # replace with actual PNG URL
+IMAGE_URL = "https://mafie.podsveti.cz/graf/"
 
 # Ensure directories exist
 os.makedirs("captures", exist_ok=True)
