@@ -1,0 +1,32 @@
+name: Capture PNG
+
+on:
+  schedule:
+    - cron: "*/1 * * * *"   # every minute
+  workflow_dispatch:
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run capture script
+        run: python capture_image.py
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: png-capture-${{ github.run_id }}-${{ github.run_number }}
+          path: captures/
+          retention-days: 90
