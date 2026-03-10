@@ -1,4 +1,5 @@
 import requests
+from requests.adapters import HTTPAdapter, Retry
 from datetime import datetime
 import hashlib
 import os
@@ -14,9 +15,22 @@ now = datetime.now(ZoneInfo("Europe/Prague"))
 timestamp = now.strftime("%Y%m%d-%H%M%S")
 
 # Download image
-response = requests.get(IMAGE_URL, timeout=20)
-response.raise_for_status()
-content = response.content
+session = requests.Session()
+retries = Retry(
+    total=5,
+    backoff_factor=2,
+    status_forcelist=[500, 502, 503, 504],
+    allowed_methods=["GET"]
+)
+session.mount("https://", HTTPAdapter(max_retries=retries))
+
+try:
+    response = session.get(IMAGE_URL, timeout=60)
+    response.raise_for_status()
+    content = response.content
+except Exception as e:
+    print("Download failed:", e)
+    content = b""  # empty content so hash still logs
 
 # Compute SHA-256 hash
 sha256 = hashlib.sha256(content).hexdigest()
