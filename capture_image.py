@@ -5,16 +5,25 @@ from requests.adapters import HTTPAdapter, Retry
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-IMAGE_URL = "https://mafie.podsveti.cz/graf/"
+# -----------------------------
+# Read configuration from environment
+# -----------------------------
+IMAGE_URL = os.getenv("IMAGE_URL", "https://mafie.podsveti.cz/graf/")
+CAPTURE_DIR = os.getenv("CAPTURE_DIR", "captures")
+CAPTURE_TIMEZONE = os.getenv("CAPTURE_TIMEZONE", "Europe/Prague")
 
-# Read configuration from environment variables
 retry_total = int(os.getenv("RETRY_TOTAL", 5))
 retry_timeout = int(os.getenv("RETRY_TIMEOUT", 20))
 retry_backoff = float(os.getenv("RETRY_BACKOFF", 1.0))
 
+# -----------------------------
 # Ensure output directory exists
-os.makedirs("captures", exist_ok=True)
+# -----------------------------
+os.makedirs(CAPTURE_DIR, exist_ok=True)
 
+# -----------------------------
+# HTTP headers (kept in code)
+# -----------------------------
 headers = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -27,6 +36,9 @@ headers = {
     "Connection": "keep-alive",
 }
 
+# -----------------------------
+# Capture logic
+# -----------------------------
 def attempt_capture():
     session = requests.Session()
 
@@ -44,9 +56,9 @@ def attempt_capture():
         response = session.get(IMAGE_URL, headers=headers, timeout=retry_timeout)
         response.raise_for_status()
 
-        now = datetime.now(ZoneInfo("Europe/Prague"))
+        now = datetime.now(ZoneInfo(CAPTURE_TIMEZONE))
         timestamp = now.strftime("%Y%m%d-%H%M%S")
-        filename = f"captures/{timestamp}.png"
+        filename = f"{CAPTURE_DIR}/{timestamp}.png"
 
         with open(filename, "wb") as f:
             f.write(response.content)
