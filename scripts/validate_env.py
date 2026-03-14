@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import os
 import sys
 from zoneinfo import ZoneInfo
@@ -6,10 +7,14 @@ def fail(msg):
     print(f"Configuration error: {msg}")
     sys.exit(2)
 
-def require_int(name, min_value=None):
+def require_env(name):
     val = os.getenv(name)
-    if val is None:
-        fail(f"{name} is not set")
+    if val is None or val == "":
+        fail(f"{name} is not set or empty")
+    return val
+
+def require_int(name, min_value=None):
+    val = require_env(name)
     try:
         num = int(val)
     except ValueError:
@@ -19,28 +24,31 @@ def require_int(name, min_value=None):
     return num
 
 def main():
+    # -----------------------------
     # Core capture settings
-    image_url = os.getenv("IMAGE_URL")
-    if not image_url or not image_url.startswith(("http://", "https://")):
-        fail(f"Invalid IMAGE_URL: {image_url!r}")
+    # -----------------------------
+    image_url = require_env("IMAGE_URL")
+    if not image_url.startswith(("http://", "https://")):
+        fail(f"IMAGE_URL must start with http:// or https://, got {image_url!r}")
 
-    capture_dir = os.getenv("CAPTURE_DIR")
-    if not capture_dir:
-        fail("CAPTURE_DIR is empty")
+    capture_dir = require_env("CAPTURE_DIR")
 
-    # Timezone
-    tz = os.getenv("CAPTURE_TIMEZONE")
+    timezone = require_env("CAPTURE_TIMEZONE")
     try:
-        ZoneInfo(tz)
+        ZoneInfo(timezone)
     except Exception:
-        fail(f"Invalid CAPTURE_TIMEZONE: {tz!r}")
+        fail(f"Invalid CAPTURE_TIMEZONE: {timezone!r}")
 
-    # Retry settings
+    # -----------------------------
+    # Retry settings (Python)
+    # -----------------------------
     require_int("RETRY_TOTAL", min_value=0)
     require_int("RETRY_TIMEOUT", min_value=1)
     require_int("RETRY_BACKOFF", min_value=0)
 
+    # -----------------------------
     # Loop settings (shell)
+    # -----------------------------
     require_int("CAPTURE_REPEATS", min_value=0)
     require_int("BASE_SLEEP", min_value=0)
     require_int("JITTER_RANGE", min_value=0)
