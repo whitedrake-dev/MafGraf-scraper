@@ -1,8 +1,17 @@
 name: Capture PNG
 
-# Use Node.js 24 for all JavaScript-based actions
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+  # Configuration parameters for both the shell script and Python
+  CAPTURE_REPEATS: 39        # Number of captures after the initial probe
+  BASE_SLEEP: 60             # Base delay between captures (seconds)
+  JITTER_RANGE: 5            # Jitter range: actual jitter is [-5, +5] seconds
+
+  # Python retry configuration
+  RETRY_TOTAL: 5             # Total retry attempts for GET
+  RETRY_TIMEOUT: 20          # Timeout per GET request (seconds)
+  RETRY_BACKOFF: 1           # Exponential backoff factor
 
 on:
   schedule:
@@ -25,27 +34,8 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Capture PNG repeatedly
-        run: |
-          # Number of captures to perform *after* the first successful probe.
-          # Total captures = 1 (probe) + CAPTURE_REPEATS.
-          CAPTURE_REPEATS=39
-
-          echo "Starting probe capture…"
-          if ! python capture_image.py; then
-            echo "Probe capture failed — aborting workflow."
-            exit 1
-          fi
-
-          echo "Probe succeeded — performing $CAPTURE_REPEATS additional captures."
-
-          for i in $(seq 1 $CAPTURE_REPEATS)
-          do
-            python capture_image.py
-            sleep 60
-          done
-
-          exit 0
+      - name: Run capture loop
+        run: bash scripts/run_capture.sh
 
       - name: Upload captures
         uses: actions/upload-artifact@v4
