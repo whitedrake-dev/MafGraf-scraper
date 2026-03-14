@@ -1,5 +1,6 @@
 name: Capture PNG
 
+# Use Node.js 24 for all JavaScript-based actions
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -24,15 +25,29 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Run repeated captures
+      - name: Capture PNG repeatedly
         run: |
-          for i in {1..40}
+          # Number of captures to perform *after* the first successful probe.
+          # Total captures = 1 (probe) + CAPTURE_REPEATS.
+          CAPTURE_REPEATS=39
+
+          echo "Starting probe capture…"
+          if ! python capture_image.py; then
+            echo "Probe capture failed — aborting workflow."
+            exit 1
+          fi
+
+          echo "Probe succeeded — performing $CAPTURE_REPEATS additional captures."
+
+          for i in $(seq 1 $CAPTURE_REPEATS)
           do
             python capture_image.py
             sleep 60
           done
 
-      - name: Upload artifact
+          exit 0
+
+      - name: Upload captures
         uses: actions/upload-artifact@v4
         with:
           name: png-capture-${{ github.run_id }}-${{ github.run_number }}
