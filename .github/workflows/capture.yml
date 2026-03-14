@@ -3,15 +3,26 @@ name: Capture PNG
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
-  # Configuration parameters for both the shell script and Python
+  # -----------------------------
+  # Core capture settings
+  # -----------------------------
+  IMAGE_URL: "https://mafie.podsveti.cz/graf/"
+  CAPTURE_DIR: "captures"
+  CAPTURE_TIMEZONE: "Europe/Prague"
+
+  # -----------------------------
+  # Retry settings for Python
+  # -----------------------------
+  RETRY_TOTAL: 5
+  RETRY_TIMEOUT: 20
+  RETRY_BACKOFF: 1
+
+  # -----------------------------
+  # Loop settings for shell script
+  # -----------------------------
   CAPTURE_REPEATS: 39        # Number of captures after the initial probe
   BASE_SLEEP: 60             # Base delay between captures (seconds)
   JITTER_RANGE: 5            # Jitter range: actual jitter is [-5, +5] seconds
-
-  # Python retry configuration
-  RETRY_TOTAL: 5             # Total retry attempts for GET
-  RETRY_TIMEOUT: 20          # Timeout per GET request (seconds)
-  RETRY_BACKOFF: 1           # Exponential backoff factor
 
 on:
   schedule:
